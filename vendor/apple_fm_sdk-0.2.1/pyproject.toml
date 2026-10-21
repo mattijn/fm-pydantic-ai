@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "build_backend"
+backend-path = ["."]
+
+[project]
+name = "apple-fm-sdk"
+version = "0.2.1"
+description = "Python bindings for Apple's Foundation Models Swift framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    {name = "Apple Inc."},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["machine-learning", "artificial-intelligence", "apple", "foundation-models"]
+
+dependencies = [
+    "build",
+    "setuptools>=75.3.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-timeout",
+    "ruff>=0.14.5",
+    "ctypesgen>=1.1.1",
+    "psutil>=7.2.2",
+    "twine>=6.2.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-book-theme>=1.0.0",
+    "sphinx-autodoc-typehints>=1.25.0",
+    "sphinx-copybutton>=0.5.2",
+    "myst-parser>=2.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/apple/python-apple-fm-sdk"
+"Bug Reports" = "https://github.com/apple/python-apple-fm-sdk/issues"
+"Source" = "https://github.com/apple/python-apple-fm-sdk"
+
+[tool.setuptools]
+packages = ["apple_fm_sdk"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+apple_fm_sdk = ["lib/*.a", "lib/*.dylib"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+# Show warnings in test output
+filterwarnings = [
+    "default",
+    "default::UserWarning",
+]

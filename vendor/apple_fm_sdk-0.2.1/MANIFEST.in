@@ -1,0 +1,21 @@
+# Include build backend (required for building from source)
+include build_backend.py
+
+# Include Swift/C source code
+recursive-include foundation-models-c/Sources *.swift *.h *.c
+recursive-include foundation-models-c/Tests *.swift
+include foundation-models-c/Package.swift
+include foundation-models-c/Package.resolved
+
+# Include any build scripts or configuration
+include foundation-models-c/*.md
+
+# Include any additional build artifacts that might be needed
+recursive-include foundation-models-c *.modulemap
+
+# Exclude generated files and compiled binaries from sdist
+global-exclude _ctypes_bindings.py
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+prune src/apple_fm_sdk/lib
