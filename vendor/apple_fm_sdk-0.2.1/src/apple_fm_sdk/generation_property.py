@@ -124,7 +124,8 @@ class Property:
 
         # Create the property in C
         type_cstr = type_name.encode("utf-8")
-        is_optional = "Optional" in str(self.type_class)
+        # LOCAL PATCH: str(Optional[X]) is "X | None" on Python 3.14+, so check the union members
+        is_optional = type(None) in getattr(self.type_class, "__args__", ())
         prop_ptr = lib.FMGenerationSchemaPropertyCreate(
             name_cstr, desc_cstr, type_cstr, is_optional
         )

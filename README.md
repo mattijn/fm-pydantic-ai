@@ -10,5 +10,9 @@ uv run python weather_agent.py
 and image input. Apple runs tools inside `session.respond()`; the model registers a proxy tool per
 Pydantic AI tool that suspends the generation until Pydantic AI sends the tool result back.
 
-`vendor/apple_fm_sdk-0.2.1` is the PyPI sdist without the Xcode check in
-`build_backend.py`, so the Command Line Tools can build it.
+`vendor/apple_fm_sdk-0.2.1` is the PyPI sdist with two local patches: no Xcode check in `build_backend.py`, so the
+Command Line Tools can build it, and optional-property detection in `generation_property.py` that works on Python 3.14.
+
+```bash
+uv run --group dev ruff check . && uv run --group dev ruff format --check . && uv run --group dev mypy && uv run --group dev pytest
+```
