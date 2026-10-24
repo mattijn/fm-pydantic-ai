@@ -13,6 +13,8 @@ Pydantic AI tool that suspends the generation until Pydantic AI sends the tool r
 `vendor/apple_fm_sdk-0.2.1` is the PyPI sdist with two local patches: no Xcode check in `build_backend.py`, so the
 Command Line Tools can build it, and optional-property detection in `generation_property.py` that works on Python 3.14.
 
+MIT licensed, except `vendor/apple_fm_sdk-0.2.1` (Apache 2.0, Apple).
+
 ```bash
 uv run --group dev ruff check . && uv run --group dev ruff format --check . && uv run --group dev mypy && uv run --group dev pytest
 ```

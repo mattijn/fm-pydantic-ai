@@ -2,6 +2,8 @@
 name = "fm-pydantic-ai"
 version = "0.1.0"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "apple-fm-sdk",
     "pydantic-ai-slim>=2.59.0",
