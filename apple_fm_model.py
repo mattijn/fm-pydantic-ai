@@ -29,6 +29,7 @@ from typing import Any
 
 import apple_fm_sdk as fm
 from apple_fm_sdk.generation_property import Property
+from opentelemetry import trace
 from pydantic_ai.messages import (
     BinaryContent,
     ImageUrl,
@@ -50,6 +51,8 @@ from pydantic_ai.tools import RunContext, ToolDefinition
 from pydantic_ai.usage import RequestUsage
 
 __all__ = ["AppleFoundationModel", "AppleStreamedResponse"]
+
+TRACER = trace.get_tracer(__name__)
 
 PARALLEL_TOOL_CALL_WINDOW = 0.3  # seconds to wait for sibling tool calls after the first one
 
@@ -410,7 +413,9 @@ def proxy_tool(
     async def call(self: fm.Tool, args: fm.GeneratedContent) -> str:
         arguments = args.to_json()
         if (recorded := replay.take(tool.name, arguments)) is not None:
-            return recorded
+            attributes = {"gen_ai.tool.name": tool.name, "gen_ai.tool.call.arguments": arguments}
+            with TRACER.start_as_current_span(f"replay_tool {tool.name}", attributes=attributes):
+                return recorded
         # runs on a thread owned by the SDK, so hand over to `loop` thread-safely
         result: concurrent.futures.Future[str] = concurrent.futures.Future()
         loop.call_soon_threadsafe(events.put_nowait, ToolCall(tool.name, arguments, result))
