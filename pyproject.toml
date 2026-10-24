@@ -6,6 +6,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "apple-fm-sdk",
+    "mcp>=2.3.0",
     "pydantic-ai-slim>=2.59.0",
 ]
 
@@ -29,7 +30,7 @@ line-length = 120
 extend-exclude = ["vendor"]
 
 [tool.mypy]
-files = ["apple_fm_model.py", "weather_agent.py", "tests"]
+files = ["apple_fm_model.py", "weather_agent.py", "weather_mcp.py", "tests"]
 strict = true
 
 [[tool.mypy.overrides]]
