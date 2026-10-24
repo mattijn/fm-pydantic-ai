@@ -9,11 +9,11 @@ from pydantic_ai.tools import ToolDefinition
 
 from apple_fm_model import (
     AppleFoundationModel,
-    _SchemaBuilder,
-    _split_history,
-    _transcript_dict,
-    _user_items,
-    _with_apple_object_keys,
+    SchemaBuilder,
+    split_history,
+    transcript_dict,
+    user_items,
+    with_apple_object_keys,
 )
 from weather_agent import weather_agent
 
@@ -60,21 +60,21 @@ def model() -> AppleFoundationModel:
 
 
 def test_apple_object_keys_are_added_to_nested_objects() -> None:
-    schema = _with_apple_object_keys(AddGuests.model_json_schema(), "AddGuests")
+    schema = with_apple_object_keys(AddGuests.model_json_schema(), "AddGuests")
     assert schema["x-order"] == ["guests"]
     assert schema["$defs"]["Guest"] == {**schema["$defs"]["Guest"], "title": "Guest", "additionalProperties": False}
     assert schema["$defs"]["Guest"]["x-order"] == ["name", "age", "address"]
 
 
 def test_nested_tool_arguments() -> None:
-    schema = _SchemaBuilder(tool_def(AddGuests)).build().to_dict()
+    schema = SchemaBuilder(tool_def(AddGuests)).build().to_dict()
     assert set(schema["$defs"]) == {"Guest", "Address"}
     assert schema["$defs"]["Guest"]["properties"]["address"] == {"$ref": "#/$defs/Address"}
 
 
 def test_recursive_tool_arguments_are_rejected() -> None:
     with pytest.raises(NotImplementedError, match="Recursive"):
-        _SchemaBuilder(tool_def(Node)).build()
+        SchemaBuilder(tool_def(Node)).build()
 
 
 def test_tools_need_a_description(model: AppleFoundationModel) -> None:
@@ -86,7 +86,7 @@ def test_tools_need_a_description(model: AppleFoundationModel) -> None:
 
 
 def test_history_ending_in_tool_results_replays_them() -> None:
-    history, prompt, replay = _split_history(tool_history())
+    history, prompt, replay = split_history(tool_history())
     assert (history, prompt) == ([], ["Weather in Kampen?"])
     assert replay.take("get_weather", '{"city": "Utrecht"}') is None
     assert replay.take("get_weather", '{"city":"Kampen"}') == "3°C"
@@ -95,16 +95,16 @@ def test_history_ending_in_tool_results_replays_them() -> None:
 
 def test_history_without_user_prompt_is_rejected() -> None:
     with pytest.raises(ValueError, match="no user prompt"):
-        _split_history(tool_history()[1:])
+        split_history(tool_history()[1:])
 
 
 def test_unsupported_prompt_content_is_rejected() -> None:
     with pytest.raises(NotImplementedError, match="Only text and images"):
-        _user_items(UserPromptPart(["Listen:", BinaryContent(b"", media_type="audio/wav")]))
+        user_items(UserPromptPart(["Listen:", BinaryContent(b"", media_type="audio/wav")]))
 
 
 def test_history_converts_to_an_apple_transcript() -> None:
-    data = asyncio.run(_transcript_dict("Be brief.", tool_history(), with_images=False))
+    data = asyncio.run(transcript_dict("Be brief.", tool_history(), with_images=False))
     assert [e["role"] for e in data["transcript"]["entries"]] == ["instructions", "user", "response", "tool"]
     asyncio.run(fm.Transcript.from_dict(data))
 
