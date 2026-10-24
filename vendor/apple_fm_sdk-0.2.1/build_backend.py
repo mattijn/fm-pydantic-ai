@@ -1,5 +1,6 @@
 # For licensing see accompanying LICENSE file.
 # Copyright (C) 2026 Apple Inc. All Rights Reserved.
+# Modified for fm-pydantic-ai: removed the Xcode check so the Command Line Tools can build the package.
 
 import ast
 import subprocess

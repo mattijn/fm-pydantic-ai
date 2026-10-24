@@ -1,5 +1,6 @@
 # For licensing see accompanying LICENSE file.
 # Copyright (C) 2026 Apple Inc. All Rights Reserved.
+# Modified for fm-pydantic-ai: optional-property detection that also works on Python 3.14.
 
 """
 Generation property module for defining schema properties.
