@@ -212,6 +212,13 @@ class AppleFoundationModel(Model):
             turn.cancel()
         self.suspended.clear()
 
+    def abandon(self, tool_call_ids: list[str]) -> None:
+        """Cancel the generations waiting for these tool calls; a request with their results regenerates the turn."""
+        for turn in {id(t): t for t in map(self.suspended.__getitem__, tool_call_ids)}.values():
+            for call_id in turn.pending:
+                del self.suspended[call_id]
+            turn.cancel()
+
     def instructions_for(self, messages: list[ModelMessage], params: ModelRequestParameters) -> str | None:
         parts = self._get_instruction_parts(messages, params)
         return InstructionPart.join(parts) if parts else None

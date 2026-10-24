@@ -7,10 +7,8 @@ from pydantic_ai import Agent
 
 from apple_fm_model import AppleFoundationModel
 
-weather_agent = Agent(
-    AppleFoundationModel(fm.SystemLanguageModel()),
-    instructions="Use the tools to answer. Look up each location separately.",
-)
+model = AppleFoundationModel(fm.SystemLanguageModel())
+weather_agent = Agent(model, instructions="Use the tools to answer. Look up each location separately.")
 
 
 @weather_agent.tool_plain

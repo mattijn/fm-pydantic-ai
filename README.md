@@ -14,8 +14,10 @@ Pydantic AI tool that suspends the generation until Pydantic AI sends the tool r
 Command Line Tools can build it, and optional-property detection in `generation_property.py` that works on Python 3.14.
 
 `weather_mcp.py` serves the weather agent as a local MCP server. When a question needs your location, the on-device
-model calls a `get_user_location` tool that asks you via MCP elicitation. `.mcp.json` registers it for Claude Code;
-elicitation needs a client on the classic MCP handshake (the tests use `mode="legacy"`).
+model calls a `get_user_location` tool that asks you via MCP elicitation. On the classic protocol the question goes over
+the open connection while the generation waits; on the stateless protocol (2026-07-28) the call ends with
+`input_required`, the message history travels in the sealed request state, and the retry regenerates the turn while the
+bridge replays your answer. `.mcp.json` registers the server for Claude Code.
 
 MIT licensed, except `vendor/apple_fm_sdk-0.2.1` (Apache 2.0, Apple).
 
