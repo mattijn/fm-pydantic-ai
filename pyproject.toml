@@ -7,6 +7,7 @@ license-files = ["LICENSE"]
 dependencies = [
     "apple-fm-sdk",
     "mcp>=2.3.0",
+    "opentelemetry-api>=1.45.1",
     "pydantic-ai-slim>=2.59.0",
 ]
 
@@ -15,6 +16,10 @@ dev = [
     "mypy",
     "pytest",
     "ruff",
+]
+evals = [
+    "opentelemetry-sdk>=1.45.1",
+    "pydantic-evals==2.59.0",
 ]
 
 [tool.uv.workspace]
@@ -30,7 +35,7 @@ line-length = 120
 extend-exclude = ["vendor"]
 
 [tool.mypy]
-files = ["apple_fm_model.py", "weather_agent.py", "weather_mcp.py", "tests"]
+files = ["apple_fm_model.py", "weather_agent.py", "weather_mcp.py", "tests", "evals"]
 strict = true
 
 [[tool.mypy.overrides]]

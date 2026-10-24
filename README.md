@@ -19,6 +19,14 @@ the open connection while the generation waits; on the stateless protocol (2026-
 `input_required`, the message history travels in the sealed request state, and the retry regenerates the turn while the
 bridge replays your answer. `.mcp.json` registers the server for Claude Code.
 
+`evals/run.py` runs every scenario ten times with Pydantic Evals and grades each trial with deterministic checks on
+its trajectory: tool calls and their arguments, questions to the user, rounds and output. The outcomes, transcripts and
+OpenTelemetry spans of every trial go to `evals/results.json`.
+
+```bash
+uv run --group evals python -m evals.run --repeat 10
+```
+
 MIT licensed, except `vendor/apple_fm_sdk-0.2.1` (Apache 2.0, Apple).
 
 ```bash
