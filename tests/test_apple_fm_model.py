@@ -1,4 +1,5 @@
 import asyncio
+import gc
 
 import apple_fm_sdk as fm
 import pytest
@@ -126,3 +127,23 @@ def test_streaming(model: AppleFoundationModel) -> None:
             return [delta async for delta in result.stream_text(delta=True)]
 
     assert len(asyncio.run(stream())) > 1
+
+
+def test_tools_survive_garbage_collection_during_a_generation(model: AppleFoundationModel) -> None:
+    agent = Agent(model, instructions="Use the tools to answer. Look up each location separately.")
+
+    @agent.tool_plain
+    def get_lat_long(location: str) -> tuple[float, float]:
+        """Get the coordinates of a location."""
+        gc.collect()
+        return 52.0, 5.9
+
+    @agent.tool_plain
+    def get_weather(lat: float, lon: float) -> str:
+        """Get current weather at a location."""
+        gc.collect()
+        return "sunny, 22 degrees Celsius"
+
+    result = agent.run_sync("What's the weather in Kampen?")
+    called = {p.tool_name for m in result.all_messages() for p in m.parts if isinstance(p, ToolCallPart)}
+    assert {"get_lat_long", "get_weather"} <= called

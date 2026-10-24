@@ -94,6 +94,7 @@ class Turn:
     session: fm.LanguageModelSession
     events: asyncio.Queue[Event]
     input_tokens: int  # context so far: transcript, prompt, tools, earlier outputs and tool results
+    tools: list[fm.Tool]  # Apple keeps only the native tools; their Python callbacks must outlive the generation
     pending: dict[str, ToolCall] = field(default_factory=dict)
     stop: threading.Event = field(default_factory=threading.Event)
     task: asyncio.Task[str] | None = None
@@ -269,7 +270,7 @@ class AppleFoundationModel(Model):
             await self.token_count(prompt_text),
             await self.token_count(tools),
         ]
-        turn = Turn(session, events, sum(tokens))
+        turn = Turn(session, events, sum(tokens), tools)
 
         options = generation_options(settings)
         if params.output_mode == "native" and params.output_object:
