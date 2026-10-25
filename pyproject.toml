@@ -17,6 +17,10 @@ dev = [
     "pytest",
     "ruff",
 ]
+docs = [
+    "markdown-exec>=1.12.5",
+    "zensical>=0.0.72",
+]
 evals = [
     "opentelemetry-sdk>=1.45.1",
     "pydantic-evals==2.59.0",

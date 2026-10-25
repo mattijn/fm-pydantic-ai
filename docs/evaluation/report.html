@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fm-pydantic-ai evaluation</title>
+<style>
+/* Scoreboard (trials as dots, duration as strip), findings, then per scenario checks × trials and per trial timeline + transcript */
+:root{
+  --bg:#F6F7F9; --panel:#FFFFFF; --ink:#14171C; --muted:#5B6372; --faint:#8A92A0; --line:#DDE1E7; --soft:#EEF1F5;
+  --pass:#1E7B4E; --fail:#C23B2A; --accent:#3A49D1; --gen:#3A49D1; --tool:#B26A00; --mcp:#6B7280; --replay:#8A3FC4; --ask:#1E7B4E;
+  --f-body:system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0F1216; --panel:#171B21; --ink:#E9ECF1; --muted:#A1A9B6; --faint:#727B89; --line:#2A3039; --soft:#1E232B;
+  --pass:#3FBF83; --fail:#F0705C; --accent:#8C96FF; --gen:#8C96FF; --tool:#E9A23B; --mcp:#9AA3B0; --replay:#C48CF5; --ask:#3FBF83; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:36px}
+a{color:var(--accent)} :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code{font-family:var(--f-mono);font-size:.86em}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0}
+h2{font-size:22px;margin:0 0 6px}
+.lede{color:var(--muted);max-width:70ch;margin:0}
+.env{font:12.5px/1.6 var(--f-mono);color:var(--faint)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.scroll{overflow-x:auto}
+table.board{width:100%;border-collapse:collapse;min-width:720px}
+.board th{font:600 12px var(--f-mono);color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+.board td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+.board tr:last-child td{border-bottom:0}
+.board tr.row{cursor:pointer}
+.board tr.row:hover td,.board tr.row[aria-selected="true"] td{background:var(--soft)}
+.desc{font-size:13.5px;color:var(--muted);max-width:44ch}
+.num{font:13px var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dots{display:flex;gap:4px}
+.dot{all:unset;width:12px;height:12px;border-radius:50%;border:2px solid var(--pass);background:var(--pass);cursor:pointer;flex:none}
+.dot.fail{background:transparent;border-color:var(--fail)}
+.dot.obs{border-color:var(--muted);background:var(--muted)} .dot.obs.fail{background:transparent}
+.dot.sel{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--accent)}
+.frac{font:600 13px var(--f-mono);margin-left:8px} .ok{color:var(--pass)} .bad{color:var(--fail)} .neutral{color:var(--muted)}
+svg text{fill:var(--faint);font:10px var(--f-mono)}
+.finding{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;padding:14px 16px;align-items:baseline}
+.finding .count{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.finding .count small{font:600 13px var(--f-mono);color:var(--muted)}
+.finding h3{margin:0;font-size:16px}
+.finding button{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+.detail{display:grid;gap:16px;padding:18px}
+.prompt{font:14px var(--f-mono);background:var(--soft);padding:8px 12px;border-radius:8px}
+table.grid{border-collapse:collapse;font-size:14px}
+.grid td,.grid th{padding:5px 8px;text-align:left;white-space:nowrap}
+.grid th,.grid .sep td{font:600 12px var(--f-mono);color:var(--muted)}
+.trial{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.box{border:1px solid var(--line);border-radius:10px;min-width:0}
+.box-h{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font:600 12px var(--f-mono);color:var(--muted)}
+.tl{padding:10px 12px}
+.tl svg{display:block;width:100%}
+.tl .lbl{fill:var(--ink);font:12px var(--f-body)} .tl .lbl.sub{fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);padding:0 12px 12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.transcript{padding:10px 12px;display:grid;gap:8px;max-height:460px;overflow:auto;font-size:14px}
+.who{font:600 11px var(--f-mono);text-transform:uppercase;color:var(--muted)}
+.call{font:12.5px/1.45 var(--f-mono);background:var(--soft);padding:4px 8px;border-radius:6px;display:block;margin-top:3px;overflow-wrap:anywhere}
+.ret{color:var(--muted)}
+.out{padding:10px 12px}
+.err{color:var(--fail);font:13px var(--f-mono);padding:10px 12px}
+@media (max-width:860px){.trial{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>fm-pydantic-ai evaluation</h1>
+    <p class="lede" id="lede">Loading results…</p>
+    <div class="env" id="env"></div>
+  </header>
+  <section><h2>Scoreboard</h2><p class="lede" style="margin-bottom:12px">Each dot is a trial: filled when all checks passed. Click a row for its checks, a dot for the timeline and transcript of that run.</p><div class="panel scroll"><table class="board" id="board"></table></div></section>
+  <section><h2>Findings</h2><p class="lede" style="margin-bottom:12px">Measured, not graded: they describe the model, not the bridge.</p><div style="display:grid;gap:10px" id="findings"></div></section>
+  <section id="detail-sec"><h2>Scenario</h2><div class="panel detail" id="detail"></div></section>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const median=a=>{const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
+const fmt=(n,d=1)=>Number(n).toFixed(d);
+let R,S,byId,graded,sel,selTrial=0;
+
+function strip(trials,max){
+  const W=150,x=v=>6+v/max*(W-12),pts=trials.filter(t=>!t.error),m=median(pts.map(t=>t.duration_s));
+  return `<svg width="${W}" height="26" role="img" aria-label="Duration per trial, median ${fmt(m)} s"><line x1="6" x2="${W-6}" y1="12" y2="12" stroke="var(--line)"/>${pts.map(t=>`<circle cx="${x(t.duration_s)}" cy="9" r="3.2" fill="var(--accent)" fill-opacity=".55"/>`).join('')}<line x1="${x(m)}" x2="${x(m)}" y1="3" y2="15" stroke="var(--ink)" stroke-width="2"/>${[0,max/2,max].map(v=>`<text x="${x(v)}" y="25" text-anchor="middle">${fmt(v,0)}s</text>`).join('')}</svg>`;
+}
+function board(){
+  const max=Math.ceil(Math.max(...S.flatMap(s=>s.trials.filter(t=>!t.error).map(t=>t.duration_s))));
+  $('#board').innerHTML=`<thead><tr><th>Scenario</th><th>Trials (all checks passed)</th><th>Duration · median</th><th>Tokens in / out · median</th></tr></thead><tbody>${graded.map(s=>{
+    const ok=s.trials.filter(t=>t.passed).length,n=s.trials.length,good=s.trials.filter(t=>!t.error);
+    return `<tr class="row" data-id="${s.id}" tabindex="0" aria-selected="${s.id===sel}"><td><strong>${esc(s.title)}</strong><div class="desc">${esc(s.description)}</div></td>
+    <td><div style="display:flex;align-items:center"><div class="dots">${s.trials.map((t,i)=>`<button class="dot${t.passed?'':' fail'}${s.id===sel&&i===selTrial?' sel':''}" data-id="${s.id}" data-i="${i}" aria-label="Trial ${i+1}: ${t.passed?'passed':'failed'}" type="button"></button>`).join('')}</div><span class="frac ${ok===n?'ok':'bad'}">${ok}/${n}</span></div></td>
+    <td>${strip(s.trials,max)}</td><td class="num">${Math.round(median(good.map(t=>t.input_tokens)))} / ${Math.round(median(good.map(t=>t.output_tokens)))}</td></tr>`}).join('')}</tbody>`;
+  $('#board').querySelectorAll('tr.row').forEach(r=>{r.addEventListener('click',e=>{if(!e.target.closest('.dot'))pick(r.dataset.id,0)});r.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===r)pick(r.dataset.id,0)})});
+  $('#board').querySelectorAll('.dot').forEach(d=>d.addEventListener('click',()=>pick(d.dataset.id,+d.dataset.i,true)));
+}
+function findings(){
+  $('#findings').innerHTML=S.flatMap(s=>s.findings.map(f=>{const yes=s.trials.filter(t=>t.findings[f]).length;
+    return `<div class="panel finding"><div class="count">${yes}<small>/${s.trials.length}</small></div><div><h3>${esc(s.title)}: ${esc(f)}</h3><button type="button" data-id="${s.id}" data-i="${Math.max(0,s.trials.findIndex(t=>t.findings[f]===(yes>0)))}">Show an example trial →</button></div></div>`})).join('');
+  $('#findings').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>pick(b.dataset.id,+b.dataset.i,true)));
+}
+function pick(id,i,scroll){sel=id;selTrial=i;board();detail();if(scroll)$('#detail-sec').scrollIntoView({block:'start'})}
+
+const KINDS=[['tools/call','MCP call','--mcp'],['invoke_agent','agent run','--mcp'],['chat','Apple generates','--gen'],['execute_tool','tool','--tool'],['replay_tool','replay','--replay'],['MCP send elicitation/create','question to user','--ask']];
+const kindOf=n=>KINDS.find(k=>k[0]==='MCP send elicitation/create'?n===k[0]:n.startsWith(k[0]));
+function timeline(spans){
+  const rows=spans.filter(s=>kindOf(s.name)).map(s=>{const k=kindOf(s.name);return{...s,k,txt:k[0].endsWith('_tool')?`${k[1]}: ${s.name.split(' ')[1]}`:k[1]}});
+  const maxMs=Math.max(...rows.map(r=>r.end_ms),100),LW=150,W=640,RH=20,H=8+rows.length*RH+24,x=ms=>LW+ms/maxMs*(W-LW-8);
+  const step=[250,500,1000,2000,5000].find(v=>maxMs/v<=8)||10000,ticks=[];for(let v=0;v<=maxMs;v+=step)ticks.push(v);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Timeline of ${rows.length} spans">${ticks.map(v=>`<line x1="${x(v)}" x2="${x(v)}" y1="8" y2="${H-20}" stroke="var(--line)"/><text x="${x(v)}" y="${H-6}" text-anchor="middle">${v>=1000?fmt(v/1000,v%1000?1:0)+' s':v+' ms'}</text>`).join('')}${rows.map((r,i)=>{const y=8+i*RH,o=r.k[1]==='agent run'||r.k[1]==='MCP call';
+    return `<text class="lbl${o?' sub':''}" x="0" y="${y+RH*.68}">${esc(r.txt)}</text><rect x="${x(r.start_ms)}" y="${y+3}" width="${Math.max(2,x(r.end_ms)-x(r.start_ms))}" height="${RH-6}" rx="2" fill="${o?'none':`var(${r.k[2]})`}" stroke="var(${r.k[2]})" stroke-width="${o?1.2:0}"><title>${esc(r.name)}: ${fmt((r.end_ms-r.start_ms)/1000,2)} s</title></rect>`}).join('')}</svg>`;
+}
+function transcript(msgs){
+  return msgs.map(m=>`<div><div class="who">${m.role==='assistant'?'model':m.role}</div>${(m.parts||[]).map(p=>p.type==='text'?`<div>${esc(p.content)}</div>`:p.type==='tool_call'?`<span class="call">→ ${esc(p.name)}(${esc(p.arguments||'')})</span>`:p.type==='tool_call_response'?`<span class="call ret">← ${esc(p.name)}: ${esc(typeof p.result==='string'?p.result:JSON.stringify(p.result))}</span>`:`<span class="call">${esc(JSON.stringify(p))}</span>`).join('')}</div>`).join('');
+}
+function detail(){
+  const s=byId[sel],t=s.trials[selTrial];
+  const row=(n,kind)=>{const v=s.trials.map(x=>(kind==='check'?x.checks:x.findings)[n]),yes=v.filter(Boolean).length;
+    return `<tr><td>${esc(n)}</td>${v.map((b,i)=>`<td><button class="dot${kind==='finding'?' obs':''}${b?'':' fail'}${i===selTrial?' sel':''}" data-i="${i}" type="button" aria-label="Trial ${i+1}: ${b?'yes':'no'}"></button></td>`).join('')}<td class="frac ${kind==='finding'?'neutral':yes===v.length?'ok':'bad'}">${yes}/${v.length}</td></tr>`};
+  const span=s.trials.length+2;
+  $('#detail').innerHTML=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px"><div><strong>${esc(s.title)}</strong><div class="desc">${esc(s.description)}</div></div><div class="prompt">${esc(s.prompt)}</div></div>
+   <div class="scroll"><table class="grid"><tr><th></th>${s.trials.map((x,i)=>`<th>${i+1}</th>`).join('')}<th></th></tr>${s.checks.length?`<tr class="sep"><td colspan="${span}">CHECKS</td></tr>${s.checks.map(n=>row(n,'check')).join('')}`:''}${s.findings.length?`<tr class="sep"><td colspan="${span}">FINDINGS (not graded)</td></tr>${s.findings.map(n=>row(n,'finding')).join('')}`:''}</table></div>
+   ${t.error?`<div class="box err">Trial ${selTrial+1} failed: ${esc(t.error)}</div>`:`<div class="trial"><div class="box"><div class="box-h"><span>Timeline, trial ${selTrial+1}</span><span>${fmt(t.duration_s)} s · ${t.agent_runs} run${t.agent_runs===1?'':'s'} · ${t.input_tokens} / ${t.output_tokens} tokens</span></div><div class="tl">${timeline(t.spans)}</div><div class="legend">${[['--gen','Apple generates'],['--tool','tool in Pydantic AI'],['--replay','replay in the bridge'],['--ask','question to user'],['--mcp','agent run / MCP call (outline)']].map(([c,l])=>`<span><i style="background:var(${c})"></i>${l}</span>`).join('')}</div></div>
+   <div class="box"><div class="box-h"><span>Transcript</span><span>${t.asked.length?'asked: '+esc(t.asked.join(', ')):''}</span></div><div class="transcript">${transcript(t.transcript)}</div><div class="box-h" style="border-top:1px solid var(--line)"><span>Answer</span></div><div class="out">${esc(t.output)}</div></div></div>`}`;
+  $('#detail').querySelectorAll('.grid .dot').forEach(d=>d.addEventListener('click',()=>pick(sel,+d.dataset.i)));
+}
+fetch('results.json').then(r=>{if(!r.ok)throw new Error(`results.json: HTTP ${r.status}`);return r.json()}).then(data=>{
+  R=data;S=R.scenarios;byId=Object.fromEntries(S.map(s=>[s.id,s]));graded=S.filter(s=>s.checks.length);sel=graded[0].id;
+  const e=R.environment;
+  $('#lede').textContent=`${S.length} scenarios, ${R.repeat} trials each, on Apple's on-device Foundation Model. Deterministic checks grade every trial; there is no LLM judge.`;
+  $('#env').textContent=`${R.generated} · macOS ${e.macos} (${e.machine}) · Python ${e.python} · ${Object.entries(e.packages).map(([k,v])=>k+' '+v).join(' · ')}`;
+  board();findings();detail();
+}).catch(err=>{$('#lede').textContent=`Could not load the results: ${err.message}`});
+</script>
+</body>
+</html>

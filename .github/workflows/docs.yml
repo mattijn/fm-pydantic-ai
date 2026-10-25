@@ -1,0 +1,65 @@
+name: docs
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # the docs group only: the Apple SDK in the project builds on macOS alone
+      - name: Install
+        run: python -m pip install zensical markdown-exec
+      - name: Build
+        run: |
+          zensical build --clean --strict 2>&1 | tee build.log
+          ! grep -B2 -A20 "exited with errors" build.log
+      # every relative src, href and data-src points to a file of the site, as a plain
+      # static server (GitHub Pages) resolves it
+      - name: Check the references
+        shell: python
+        run: |
+          import posixpath, re, sys
+          from pathlib import Path
+
+          broken = []
+          for page in Path("site").rglob("*.html"):
+              base = posixpath.dirname(page.relative_to("site").as_posix())
+              for ref in re.findall(r'(?:href|src|data-src)="([^"#?]+)', page.read_text()):
+                  if re.match(r"(https?:|mailto:|//|data:|javascript:|/)", ref):
+                      continue
+                  target = Path("site", posixpath.normpath(posixpath.join(base, ref)))
+                  if not (target.is_file() or (target / "index.html").is_file()):
+                      broken.append(f"{page}: {ref}")
+          print("\n".join(broken))
+          sys.exit(bool(broken))
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Publish to GitHub Pages
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

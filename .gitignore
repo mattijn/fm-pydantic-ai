@@ -5,3 +5,4 @@ __pycache__/
 vendor/apple_fm_sdk-0.2.1/foundation-models-c/.build/
 vendor/apple_fm_sdk-0.2.1/src/apple_fm_sdk/lib/
 vendor/apple_fm_sdk-0.2.1/src/apple_fm_sdk/_ctypes_bindings.py
+site/
