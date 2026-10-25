@@ -6,15 +6,17 @@ site_description = "Pydantic AI on Apple's on-device Foundation Model"
 repo_url = "https://github.com/mattijn/fm-pydantic-ai"
 repo_name = "mattijn/fm-pydantic-ai"
 site_dir = "site"
+extra_css = ["css/evaluation.css"]
 nav = [
   { "Overview" = "index.md" },
   { "Installation" = "installation.md" },
   { "Usage" = "usage.md" },
-  { "Evaluation" = "evaluation/index.md" },
+  { "Evaluation" = "evaluation.md" },
 ]
 
 [project.theme]
 language = "en"
+favicon = "favicon.png"
 features = [
   "content.code.copy",
   "navigation.footer",

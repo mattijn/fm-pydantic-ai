@@ -1,0 +1,48 @@
+/* Evaluation figures: slate for the data, muted blue for time, rose only for what the model does */
+:root {
+  --eval-ink: #23395b;
+  --eval-muted: #6b7a90;
+  --eval-held: #5b84b1;
+  --eval-rose: #c8566f;
+  --eval-track: #e9edf2;
+  --eval-gen: #4a6fa5;
+  --eval-rest: #c9d9ec;
+  --eval-line: #d5dce5;
+  --eval-on-ink: #ffffff;
+}
+
+[data-md-color-scheme="slate"] {
+  --eval-ink: #e6ecf3;
+  --eval-muted: #9aa7b8;
+  --eval-held: #7fa6d3;
+  --eval-rose: #e58ba0;
+  --eval-track: #2a3242;
+  --eval-gen: #7fa6d3;
+  --eval-rest: #3a4a63;
+  --eval-line: #3a4456;
+  --eval-on-ink: #1e2533;
+}
+
+.eval-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.2em 0;
+  font-family: var(--md-text-font-family);
+}
+
+.eval-figure text { fill: var(--eval-ink); font-size: 13px; }
+.eval-figure .label { font-weight: 600; }
+.eval-figure .muted, .eval-figure .tick { fill: var(--eval-muted); font-size: 12px; }
+.eval-figure .value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.eval-figure .held { fill: var(--eval-held); }
+.eval-figure .broke { fill: none; stroke: var(--eval-rose); stroke-width: 2; }
+.eval-figure .track { fill: var(--eval-track); }
+.eval-figure .accent { fill: var(--eval-rose); }
+.eval-figure .gen { fill: var(--eval-gen); }
+.eval-figure .rest { fill: var(--eval-rest); }
+.eval-figure .tool { fill: var(--eval-ink); }
+.eval-figure .baseline, .eval-figure .leader { stroke: var(--eval-line); stroke-width: 1; }
+.eval-figure .boundary { stroke: var(--eval-rose); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.eval-figure .callout { fill: var(--eval-ink); }
+.eval-figure .callout-n { fill: var(--eval-on-ink); font-size: 12px; font-weight: 700; }

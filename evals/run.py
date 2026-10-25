@@ -188,10 +188,9 @@ def rounds(count: int) -> Check:
     return check
 
 
-def uses_looked_up_coordinates(trial: Trial) -> bool:
-    """`get_lat_long` always answers (0.0, 0.0); weather lookups should pass exactly that on."""
-    weather = [c for c in trial.tool_calls if c.name == "get_weather"]
-    return bool(weather) and all(c.arguments == {"lat": 0, "lon": 0} for c in weather)
+def overrides_looked_up_coordinates(trial: Trial) -> bool:
+    """`get_lat_long` always answers (0.0, 0.0); a weather lookup with other coordinates ignores that answer."""
+    return any(c.name == "get_weather" and c.arguments != {"lat": 0, "lon": 0} for c in trial.tool_calls)
 
 
 def places_kampen_in_oslo(trial: Trial) -> bool:
@@ -202,8 +201,8 @@ def streams_in_pieces(trial: Trial) -> bool:
     return trial.deltas > 1
 
 
-def answers_without_a_question(trial: Trial) -> bool:
-    return not trial.output.rstrip().endswith("?")
+def asks_in_its_answer(trial: Trial) -> bool:
+    return trial.output.rstrip().endswith("?")
 
 
 def city_is(city: str) -> Check:
@@ -312,7 +311,7 @@ SCENARIOS: dict[str, Scenario] = {
             "converts to Celsius": calls("convert_temp"),
             "reports 22.2 °C": says("22.2"),
         },
-        {"passes on the looked-up coordinates (0, 0)": uses_looked_up_coordinates},
+        {"overrides the coordinates from get_lat_long": overrides_looked_up_coordinates},
     ),
     "structured": Scenario(
         "Structured output",
@@ -372,7 +371,7 @@ SCENARIOS: dict[str, Scenario] = {
         "What's the weather in Paris? Ask me which temperature unit I want first.",
         generic_question_tool,
         {},
-        {"uses ask_user": calls("ask_user"), "answers without a question": answers_without_a_question},
+        {"skips the ask_user tool": does_not_call("ask_user"), "asks its question in the answer": asks_in_its_answer},
     ),
     "garbage-collection": Scenario(
         "Garbage collection mid-generation",
